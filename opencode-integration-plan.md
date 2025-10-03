@@ -7,14 +7,14 @@ Decision Summary:
 - Use all subagents from my‑opencode
 - Preserve thoughts/ workflow: keep a standalone `/research_codebase` command that writes to thoughts/; `/plan` must always refer to relevant thoughts research if present (no migration of legacy content)
 - No wrappers or env toggles
-- Produce per‑feature `research.md` with a machine‑readable JSON appendix
-- Defaults resolved: `schema_version = "1.0"`, analyzer hotspots default `N = 20` (heuristic‑aware), evidence anchors threshold default `5`, include `last_seen_commit` + re‑anchoring metadata
+ - Produce per‑feature `research.md` (narrative) with strong evidence anchors (file:line)
+ - Defaults resolved: analyzer hotspots default `N = 20` (heuristic‑aware), evidence anchors threshold default `5`
 
 ## Objectives
 - Unify the development workflow under Spec‑Kit commands and guardrails.
 - Integrate my‑opencode’s subagent strengths into Spec‑Kit’s planning, analysis, and implementation commands.
-- Eliminate the separate thoughts/ knowledge silo entirely.
-- Enhance automation by appending a structured JSON appendix to `specs/<feature>/research.md`.
+ - Preserve thoughts/ as an auxiliary research space referenced by `/plan`.
+ - Keep outputs consistent with Spec‑Kit defaults (Markdown artifacts only).
 
 ## Scope
 - Repository areas touched:
@@ -39,11 +39,9 @@ Decision Summary:
 - New main command:
   - `research_codebase.md` (copy from `my-opencode/command/research_codebase.md`) — standalone, writes to thoughts/
 - Command enhancements:
-  - `plan.md`: Phase 0 runs subagents, consults thoughts/ research (if present), writes narrative + JSON appendix to `research.md` and enforces acceptance gates
-  - `analyze.md`: Adds read‑only “source reality check” against `research.json` data; may surface links to related thoughts research (non‑gating)
-  - `implement.md`: Derives “Edit Waypoints” from `research.json`; blocks tasks lacking anchors
-- JSON schema for the `research.md` appendix (machine‑readable block)
-- Brief documentation note in `AGENTS.md` on the JSON appendix (optional)
+  - `plan.md`: Phase 0 runs subagents, consults thoughts/ research (if present), writes narrative `research.md` and enforces acceptance gates
+  - `analyze.md`: Adds read‑only “source reality check” using live code + research.md evidence; may surface links to related thoughts research (non‑gating)
+  - `implement.md`: Derives “Edit Waypoints” via on‑demand analysis; blocks tasks lacking resolvable anchors
 
 ## Non‑Goals
 - Migrating existing thoughts/ content (we will reference it when relevant)
@@ -61,7 +59,7 @@ Decision Summary:
 - Optional:
   - `web-search-researcher` used only when network is available or explicitly requested; include citations only
 
-## Research.md Structure (with JSON Appendix)
+## Research.md Structure
 Narrative sections:
 - Overview and Scope
 - Code Surface Map (entries, modules, key files)
@@ -73,45 +71,6 @@ Narrative sections:
 - Risks, Unknowns, Assumptions
 - Evidence Index (files and lines referenced)
 
-JSON appendix (single fenced block at end):
-```json
-{
-  "schema_version": "1.0",
-  "generated_at": "2025-01-01T12:34:56Z",
-  "generator": "spec-kit-plan-phase0+subagents@v1",
-  "feature": {
-    "branch": "string",
-    "feature_dir": "string",
-    "spec_path": "string",
-    "plan_path": "string"
-  },
-  "code_surfaces": [
-    {
-      "path": "string",
-      "role": "module|service|cli|endpoint|lib",
-      "symbols": ["string"],
-      "entry": true,
-      "last_seen_commit": "<git sha or null>",
-      "symbol_signature": "optional signature for primary symbol",
-      "context_hash": "hash of surrounding lines for re-anchoring"
-    }
-  ],
-  "flows": [
-    { "from": {"path": "string", "symbol": "string"}, "to": {"path": "string", "symbol": "string"}, "via": {"pattern": "string"}, "notes": "string" }
-  ],
-  "patterns": [
-    { "name": "string", "refs": [ { "path": "string", "lines": [1,2] } ], "rationale": "string" }
-  ],
-  "risks": [
-    { "id": "R1", "severity": "LOW|MEDIUM|HIGH|CRITICAL", "summary": "string", "evidence": [ { "path": "string", "lines": [1,2] } ] }
-  ],
-  "open_questions": [ { "id": "Q1", "text": "string" } ],
-  "artifact_index": [
-    { "type": "spec|plan|tasks|research|constitution|agents|docs|changelog", "path": "string", "title": "string", "date": "string" }
-  ],
-  "evidence_index": [ { "path": "string", "lines": [1,2,3] } ]
-}
-```
 
 ## Command Enhancements (No wrappers, Spec‑Kit as control plane)
 
@@ -123,39 +82,37 @@ Steps:
 3) Run `codebase-locator` to identify code surfaces and plausible entries.
 4) Run `codebase-analyzer` (top N surfaces) to extract flows and anchors.
 5) Run `codebase-pattern-finder` to list analogous implementations and references.
-6) Synthesize narrative sections (including External Insights) and JSON appendix; write to `specs/<feature>/research.md`.
-7) Validate the JSON schema and Phase 0 acceptance gates; mark progress in plan.
+6) Synthesize narrative sections (including External Insights) and write `specs/<feature>/research.md`.
+7) Validate Phase 0 acceptance gates; mark progress in plan.
 
 Phase 0 acceptance gates:
-- JSON present and parseable (schema_version = "1.0")
-- ≥ 1 `code_surfaces` entry with `entry=true`
-- ≥ 1 `flows` item
-- ≥ 1 `risks` item
+- research.md includes the sections listed above (Surface Map, Data Flows, Risks, Evidence Index)
 - Evidence anchors threshold: default 5; or `max(5, ceil(0.5 * entry_surfaces))`
+- At least one entry surface and one non‑trivial flow documented
 - Prefer anchors distributed across selected hotspots when possible
 - If relevant thoughts research exists, include at least one reference link in the “External Insights” section; if none exists, note “No external insights found”
 
 ### analyze.md — Read‑Only Reality Check
-Inputs: `spec.md`, `plan.md`, `tasks.md`, `research.md` (parse JSON), constitution.
+Inputs: `spec.md`, `plan.md`, `tasks.md`, `research.md` (narrative), constitution.
 Checks:
-- Terminology/entities across artifacts vs `code_surfaces`/`flows`
-- File paths in tasks vs actual repo and surfaces
+- Terminology/entities across artifacts vs the documented surfaces/flows (validate against live code with subagents)
+- File paths in tasks vs actual repo (validate existence via subagents)
 - Constitution alignment (keep existing severity rules)
 Behavior:
-- Report structured findings. If JSON missing/invalid → CRITICAL finding.
+- Report structured findings. If research.md is missing critical sections or has insufficient anchors → raise HIGH/CRITICAL findings with clear remediation.
 - Optionally surface a non‑gating “Related thoughts research” subsection with links and deltas from `research.md`
 
 ### implement.md — Execution Targeting
 Inputs: `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks` + artifacts.
 Per task:
-- Map task paths to `code_surfaces`; derive Edit Waypoints `{path, symbol, approx_lines}`
-- If absent, run `codebase-analyzer` to locate anchors; if still absent → block with actionable error
+- Derive Edit Waypoints on‑demand using `codebase-analyzer` for the target file(s)/symbols
+- Use research.md Evidence Index as guidance when present; if anchors cannot be resolved → block with actionable error
 Execution:
 - Respect phases, dependencies, and [P] parallelism in tasks.md; mark completion by updating tasks file
 
 Defaults used during execution:
 - Analyzer hotspot budget: default N = 20; heuristic when available = clamp(8, 40, round(0.02 × total_source_files)); always include files explicitly referenced in spec/plan/tasks
-- Re‑anchoring: use `last_seen_commit`, `symbol_signature`, and `context_hash` to re‑locate anchors before editing; block if anchors cannot be resolved confidently
+- Re‑anchoring: prefer fresh analysis at HEAD; if research.md anchors drift, recompute and proceed only when confident
 
 ### research_codebase — Standalone Research Command
 Purpose: Ad‑hoc, subagent‑heavy exploration for complex questions; writes narrative research to thoughts/ (and may embed the same JSON block as a sidecar for reuse).
@@ -167,47 +124,38 @@ Behavior:
 - `/plan` must always refer to these outputs (if present) in its External Insights section
 
 ## Validation & Tooling
-- JSON schema validation in Plan Phase 0; re‑validate in Analyze/Implement
 - Evidence integrity: verify referenced files exist and line ranges are valid
 - Offline behavior: `web-search-researcher` is best‑effort; never blocks gates
 
-JSON parsing and compatibility:
-- Readers must ignore unknown fields gracefully
-- Optional fields may be null/absent; only required fields gate acceptance
-- Breaking schema changes will bump `schema_version` (major); minor additions remain optional
-
 ## Success Criteria
-- `/plan` produces `research.md` with valid JSON and passes gates
+- `/plan` produces a complete research.md and passes gates
 - `/analyze` cross‑checks artifacts with code reality and constitution deterministically
-- `/implement` computes Edit Waypoints from JSON; blocks unsafe edits with clear diagnostics
-- No thoughts/ usage; no migration required; `my-opencode/` can be deleted without loss
+- `/implement` computes Edit Waypoints on‑demand; blocks unsafe edits with clear diagnostics
+- Thoughts workflow preserved; `my-opencode/` can be deleted without loss
 
 ## Risks & Mitigations
 - Large codebases → limit analyzer to top N hotspots (configurable; default N=20)
-- Schema drift → include `schema_version`; centralize JSON validation logic in the command prompt
-- Task path inaccuracies → auto‑map through `code_surfaces` and report diffs before blocking
+- Task path inaccuracies → auto‑map using `codebase-locator` and report diffs before blocking
 - Network limits → treat web search as optional enrichment only
 
 ## Rollout Plan
-- Phase A: Add subagents under `.opencode/agent/*` with renames (no behavior change yet)
-- Phase B: Enhance `plan.md` to generate `research.md` + JSON and enforce gates
-- Phase C: Enhance `analyze.md` to read JSON and perform source reality checks
-- Phase D: Enhance `implement.md` to require Edit Waypoints derived from JSON
+- Phase A: Add subagents under `.opencode/agent/*` (no behavior change yet)
+- Phase B: Enhance `plan.md` to generate `research.md` and enforce gates
+- Phase C: Enhance `analyze.md` to perform source reality checks using research.md + live code
+- Phase D: Enhance `implement.md` to compute Edit Waypoints on‑demand
 - Phase E: Validate on a fresh feature: `/specify` → `/plan` → `/tasks` → `/analyze` → `/implement`
 - Phase F: Remove `my-opencode/` after parity confirmed
 
 ## Resolved Defaults
-- Schema: adopt the listed JSON with `schema_version = "1.0"`, include `generated_at` and `generator`
 - Hotspots: default N = 20; heuristic clamp(8, 40, round(0.02 × total_source_files)); always include explicitly referenced files
 - Evidence anchors: default threshold 5; raise to `max(5, ceil(0.5 * entry_surfaces))` when many surfaces selected
-- Stability: include `last_seen_commit`, `symbol_signature`, and `context_hash` in `code_surfaces` entries
 
 ---
 
 Appendix: Implementation Checklist
-- [ ] Copy subagents to `spec-kit's-opencode/.opencode/agent/` and rename thoughts‑* → artifact‑*
-- [ ] Update `plan.md` to run subagents and write `research.md` with JSON appendix and gates
-- [ ] Update `analyze.md` to validate artifacts against code using `research.json`
-- [ ] Update `implement.md` to compute Edit Waypoints and enforce presence
+- [ ] Copy subagents to `spec-kit's-opencode/.opencode/agent/` (including thoughts‑locator/analyzer)
+- [ ] Update `plan.md` to run subagents and write `research.md` with gates
+- [ ] Update `analyze.md` to validate artifacts against code using research.md and live analysis
+- [ ] Update `implement.md` to compute Edit Waypoints on‑demand and enforce presence
 - [ ] Sanity‑run end‑to‑end on a new feature; confirm gates and reports
 - [ ] Delete `my-opencode/` after validation

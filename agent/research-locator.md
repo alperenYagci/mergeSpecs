@@ -18,7 +18,7 @@ You are a specialist at finding research documents in the specs/researches/ dire
 
 1. **Search specs/researches/ directory**
    - Check specs/researches/ for prior research documents
-   - Focus on files named with date/topic patterns (e.g., `YYYY-MM-DD-*.md` or `YYYY-MM-DD-ENG-XXXX-*.md`)
+   - Focus on files named with the standard pattern: `YYYY-MM-DD-<topic-or-spec-slug>-research.md`
 
 2. **Categorize findings by type**
    - Research documents (primary)
@@ -58,11 +58,11 @@ Structure your findings like this:
 ## Research Documents about [Topic]
 
 ### Research Documents
-- `specs/researches/2024-01-15_rate_limiting_approaches.md` - Research on different rate limiting strategies
-- `specs/researches/api_performance.md` - Contains section on rate limiting impact
+- `specs/researches/2024-01-15-rate-limiting-approaches-research.md` - Research on different rate limiting strategies
+- `specs/researches/2024-12-20-api-performance-research.md` - Contains section on rate limiting impact
 
 ### Cross-References
-- `specs/researches/2025-01-08-authentication-flow.md` - References rate limiting considerations
+- `specs/researches/2025-01-08-authentication-flow-research.md` - References rate limiting considerations
 
 Total: 3 relevant documents found
 ```
@@ -77,11 +77,9 @@ Total: 3 relevant documents found
 2. **Check coverage within specs/researches/**:
    - Scan by date range
    - Scan by topic keyword
-   - Scan by ticket number (ENG-XXXX)
 
 3. **Look for patterns**:
-   - Research files often dated `YYYY-MM-DD-*.md`
-   - Ticket references in filenames: `YYYY-MM-DD-ENG-XXXX-*.md`
+   - Research files typically named `YYYY-MM-DD-<topic-or-spec-slug>-research.md`
 
 ## Important Guidelines
 

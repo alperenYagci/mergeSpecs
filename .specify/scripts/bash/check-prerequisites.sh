@@ -78,9 +78,11 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-# Get feature paths and validate branch
+# Get feature paths and validate branch (non-fatal)
 eval $(get_feature_paths)
-check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
+if ! check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" 2>/dev/null; then
+    >&2 echo "[specify] Warning: Not on a feature branch ($CURRENT_BRANCH); continuing without branch enforcement"
+fi
 
 # If paths-only mode, output paths and exit (support JSON + paths-only combined)
 if $PATHS_ONLY; then

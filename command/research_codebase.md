@@ -28,7 +28,8 @@ Then wait for the user's research query.
 ## Steps to follow after receiving the research query:
 
 1. **Read any directly mentioned files first:**
-   - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
+   - If the user mentions specific files (specs under `specs/**/spec.md`, docs, JSON), read them FULLY first
+   - If a spec path under `specs/**/spec.md` is provided, treat it as a primary source and read it completely
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
    - **CRITICAL**: Read these files yourself in the main context before spawning any sub-tasks
    - This ensures you have full context before decomposing the research
@@ -73,6 +74,7 @@ Then wait for the user's research query.
    - Compile all sub-agent results (both codebase and previous research findings)
    - Prioritize live codebase findings as primary source of truth
    - Use previous research findings as supplementary context
+   - Cross-reference the provided spec (`specs/**/spec.md`) to ensure alignment and note discrepancies
    - Connect findings across different components
    - Include specific file paths and line numbers for reference
    - Verify all specs/researches/ paths are correct
@@ -80,14 +82,13 @@ Then wait for the user's research query.
    - Answer the user's specific questions with concrete evidence
 
 5. **Gather metadata for the research document:**
-   - Filename: `specs/researches/YYYY-MM-DD-ENG-XXXX-description.md`
-     - Format: `YYYY-MM-DD-ENG-XXXX-description.md` where:
-       - YYYY-MM-DD is today's date
-       - ENG-XXXX is the ticket number (omit if no ticket)
-       - description is a brief kebab-case description of the research topic
+   - Filename: `specs/researches/YYYY-MM-DD-<topic-or-spec-slug>-research.md`
+     - Format: `YYYY-MM-DD-<topic-or-spec-slug>-research.md` where:
+       - `YYYY-MM-DD` is today's date
+       - `<topic-or-spec-slug>` is a brief, kebab-case identifier derived from the research topic or related spec
      - Examples:
-       - With ticket: `2025-01-08-ENG-1478-parent-child-tracking.md`
-       - Without ticket: `2025-01-08-authentication-flow.md`
+       - `2025-01-08-authentication-flow-research.md`
+       - `2025-01-08-parent-child-tracking-research.md`
 
 6. **Generate research document:**
    - Use the metadata gathered in step 4
@@ -95,7 +96,7 @@ Then wait for the user's research query.
      ```markdown
      ---
      date: [Current date and time with timezone in ISO format]
-     researcher: [Researcher name from thoughts status]
+     researcher: [Researcher name]
      git_commit: [Current commit hash]
      branch: [Current branch name]
      repository: [Repository name]
@@ -109,7 +110,7 @@ Then wait for the user's research query.
      # Research: [User's Question/Topic]
 
      **Date**: [Current date and time with timezone from step 4]
-     **Researcher**: [Researcher name from thoughts status]
+     **Researcher**: [Researcher name]
      **Git Commit**: [Current commit hash from step 4]
      **Branch**: [Current branch name from step 4]
      **Repository**: [Repository name]
@@ -139,8 +140,8 @@ Then wait for the user's research query.
 
      ## Historical Context (from specs/researches/)
      [Relevant insights from previous research documents with references]
-     - `specs/researches/2025-01-08-authentication-flow.md` - Research on authentication flow
-     - `specs/researches/2024-12-20-api_performance.md` - Contains section on rate limiting impact
+     - `specs/researches/2025-01-08-authentication-flow-research.md` - Research on authentication flow
+     - `specs/researches/2024-12-20-api-performance-research.md` - Contains section on rate limiting impact
      Note: Use full paths under `specs/researches/`
 
      ## Related Research
@@ -186,7 +187,7 @@ Then wait for the user's research query.
   - ALWAYS gather metadata before writing the document (step 5 before step 6)
   - NEVER write the research document with placeholder values
 - **Path handling**: Use canonical paths under `specs/researches/`
-  - Research files are typically named `YYYY-MM-DD-*.md` or `YYYY-MM-DD-ENG-XXXX-*.md`
+  - Research files are typically named `YYYY-MM-DD-<topic-or-spec-slug>-research.md`
   - No path correction is needed; always reference `specs/researches/` directly
 - **Frontmatter consistency**:
   - Always include frontmatter at the beginning of research documents

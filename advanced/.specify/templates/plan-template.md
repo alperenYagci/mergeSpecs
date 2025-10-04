@@ -1,10 +1,10 @@
-
 # Implementation Plan: [FEATURE]
 
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
+
 ```
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
@@ -27,13 +27,16 @@
 ```
 
 **IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
+
 - Phase 2: /tasks command creates tasks.md
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
+
 [Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
+
 **Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
 **Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
@@ -45,13 +48,15 @@
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 [Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
+
 ```
 specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
@@ -63,12 +68,14 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
   for this feature. Delete unused options and expand the chosen structure with
   real paths (e.g., apps/admin, packages/something). The delivered plan must
   not include Option labels.
 -->
+
 ```
 # [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
@@ -109,45 +116,79 @@ ios/ or android/
 directories captured above]
 
 ## Phase 0: Outline & Research
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
 
-2. **Generate and dispatch research agents**:
-   ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
-   ```
+_Goal_: Produce a high‑quality, **feature‑level** `specs/[###-feature]/research.md` that synthesizes historical research from `/specs/researches/` and resolves all `[NEEDS CLARIFICATION]`.
 
-3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
+1. **Extract unknowns from Technical Context** (above)
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+   - For each `[NEEDS CLARIFICATION]` → create a focused research question
+   - For each dependency/integration → create a best‑practices or patterns question
+   - For each performance/constraint item → define measurable targets to validate
+
+2. **Harvest historical research (repo‑wide)**
+
+   - Use the **research-locator** agent to scan **`/specs/researches/`** for related documents  
+     _Prefer dated filenames like `YYYY-MM-DD-_.md`and ticketed forms`YYYY-MM-DD-ENG-XXXX-_.md`._
+   - Select the **top 3–7** most relevant docs by **recency + topical match** (feature domain, technology, constraints)
+   - Run the **research-analyzer** agent on those docs to extract:
+     - **Key Decisions & Rationale**
+     - **Constraints / Guardrails**
+     - **Lessons Learned / Gotchas**
+     - **Open / Deferred questions**
+   - **Ignore superseded docs** (if marked in content/headers)
+   - **Treat `/specs/researches/` as read‑only inputs.**  
+     _(Do not confuse these with the feature’s own `research.md` output.)_
+
+3. **Synthesize & de‑duplicate**
+
+   - Merge historical insights with the current questions/unknowns
+   - **Flag contradictions** or deltas vs. current context; propose resolution backed by sources
+   - Convert applicable insights into draft entries for Decisions/Rationale/Alternatives
+   - **Tag each insight with its source path**, e.g., `specs/researches/2025-01-08-authentication-flow.md`
+
+4. **Write the feature‑level `research.md`** → `specs/[###-feature]/research.md`
+
+   - **Summary** — what we learned and why it matters to this feature
+   - **Historical Insights (from `/specs/researches`)**
+     - One bullet per consulted doc: **path**, **date** (from filename/frontmatter), **1–2 line takeaway**
+   - **Decisions**
+     - _Decision_ / _Rationale_ / _Alternatives considered_ (cite relevant historical docs)
+   - **Open Questions**
+     - Should be **empty**; if not, **Phase 0 fails** and planning must pause
+   - **References**
+     - Canonical list of all consulted `specs/researches/*` files
+
+5. **Validation (Gate)**
+   - Historical research **consulted & referenced** (when available under `/specs/researches/`)
+   - **No** `[NEEDS CLARIFICATION]` remain
+   - Contradictions resolved or explicitly deferred with owner/date
+
+**Output**: `specs/[###-feature]/research.md` complete with a **Historical Insights** section and citations to `/specs/researches/*`.
 
 ## Phase 1: Design & Contracts
-*Prerequisites: research.md complete*
+
+_Prerequisites: research.md complete_
 
 1. **Extract entities from feature spec** → `data-model.md`:
+
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
 
 2. **Generate API contracts** from functional requirements:
+
    - For each user action → endpoint
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
 
 3. **Generate contract tests** from contracts:
+
    - One test file per endpoint
    - Assert request/response schemas
    - Tests must fail (no implementation yet)
 
 4. **Extract test scenarios** from user stories:
+
    - Each story → integration test scenario
    - Quickstart test = story validation steps
 
@@ -160,21 +201,24 @@ directories captured above]
    - Keep under 150 lines for token efficiency
    - Output to repository root
 
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+**Output**: data-model.md, /contracts/\*, failing tests, quickstart.md, agent-specific file
 
 ## Phase 2: Task Planning Approach
-*This section describes what the /tasks command will do - DO NOT execute during /plan*
+
+_This section describes what the /tasks command will do - DO NOT execute during /plan_
 
 **Task Generation Strategy**:
+
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity → model creation task [P]
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
+
+- TDD order: Tests before implementation
 - Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
 
@@ -183,25 +227,28 @@ directories captured above]
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
 ## Phase 3+: Future Implementation
-*These phases are beyond the scope of the /plan command*
+
+_These phases are beyond the scope of the /plan command_
 
 **Phase 3**: Task execution (/tasks command creates tasks.md)  
 **Phase 4**: Implementation (execute tasks.md following constitutional principles)  
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
-*Fill ONLY if Constitution Check has violations that must be justified*
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+_Fill ONLY if Constitution Check has violations that must be justified_
 
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
 
 ## Progress Tracking
-*This checklist is updated during execution flow*
+
+_This checklist is updated during execution flow_
 
 **Phase Status**:
+
 - [ ] Phase 0: Research complete (/plan command)
 - [ ] Phase 1: Design complete (/plan command)
 - [ ] Phase 2: Task planning complete (/plan command - describe approach only)
@@ -210,10 +257,12 @@ directories captured above]
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
+
 - [ ] Initial Constitution Check: PASS
 - [ ] Post-Design Constitution Check: PASS
 - [ ] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+
+_Based on Constitution v2.1.1 - See `/memory/constitution.md`_
